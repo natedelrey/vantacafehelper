@@ -1,0 +1,886 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Vantá Cafe Order Assistant</title>
+  <style>
+    :root {
+      --bg: #f8ffd9;
+      --panel: #fff7c7;
+      --panel-2: #efffc5;
+      --green: #91c727;
+      --green-dark: #41690e;
+      --green-soft: #c8ee63;
+      --yellow: #f7e24e;
+      --brown: #9a7133;
+      --text: #2f4314;
+      --muted: #6f7d45;
+      --white: #ffffff;
+      --red: #d95757;
+      --shadow: 0 22px 60px rgba(66, 105, 14, 0.22);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background:
+        radial-gradient(circle at top left, rgba(247,226,78,.55), transparent 32%),
+        radial-gradient(circle at bottom right, rgba(145,199,39,.35), transparent 34%),
+        linear-gradient(135deg, #fbffe8, var(--bg));
+      color: var(--text);
+      overflow-x: hidden;
+    }
+
+    .leaf {
+      position: fixed;
+      width: 90px;
+      height: 38px;
+      border-radius: 100px 8px 100px 8px;
+      background: rgba(145, 199, 39, .18);
+      transform: rotate(-20deg);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .leaf.one { top: 8%; left: 5%; }
+    .leaf.two { bottom: 11%; right: 8%; transform: rotate(25deg); }
+    .leaf.three { top: 18%; right: 15%; transform: rotate(-35deg); }
+
+    .app {
+      position: relative;
+      z-index: 1;
+      width: min(1180px, calc(100% - 28px));
+      margin: 26px auto;
+    }
+
+    .hero {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      padding: 22px;
+      border-radius: 30px;
+      background: linear-gradient(135deg, var(--green), #b6dc2c 58%, var(--yellow));
+      color: white;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      position: relative;
+    }
+
+    .hero::after {
+      content: "";
+      position: absolute;
+      inset: auto -30px -55px auto;
+      width: 260px;
+      height: 150px;
+      background: rgba(255,255,255,.16);
+      border-radius: 999px;
+      transform: rotate(-18deg);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .logo-badge {
+      width: 70px;
+      height: 70px;
+      border-radius: 22px;
+      background: rgba(255,255,255,.25);
+      display: grid;
+      place-items: center;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,.35);
+      font-size: 35px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(28px, 4vw, 48px);
+      letter-spacing: -1.8px;
+      text-shadow: 0 4px 16px rgba(43, 72, 9, .32);
+    }
+
+    .sub {
+      margin: 4px 0 0;
+      color: rgba(255,255,255,.88);
+      font-weight: 700;
+    }
+
+    .status-pill {
+      position: relative;
+      z-index: 1;
+      background: rgba(65,105,14,.22);
+      border: 1px solid rgba(255,255,255,.35);
+      border-radius: 999px;
+      padding: 11px 15px;
+      font-weight: 800;
+      backdrop-filter: blur(8px);
+      white-space: nowrap;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1.28fr .72fr;
+      gap: 18px;
+      margin-top: 18px;
+    }
+
+    .card {
+      background: rgba(255,255,255,.76);
+      border: 1px solid rgba(145,199,39,.35);
+      border-radius: 26px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      backdrop-filter: blur(10px);
+    }
+
+    .card-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 17px 18px 13px;
+      border-bottom: 1px solid rgba(145,199,39,.25);
+      background: linear-gradient(180deg, rgba(239,255,197,.72), rgba(255,255,255,.45));
+    }
+
+    .card-title {
+      margin: 0;
+      font-size: 19px;
+      letter-spacing: -.4px;
+    }
+
+    .tiny {
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .card-body { padding: 18px; }
+
+    .messages {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .preset-builder {
+      display: grid;
+      grid-template-columns: 145px 1fr auto;
+      gap: 9px;
+      margin-bottom: 16px;
+      padding: 12px;
+      border-radius: 20px;
+      background: rgba(239,255,197,.62);
+      border: 1px solid rgba(145,199,39,.28);
+    }
+
+    select {
+      border: 1px solid rgba(145,199,39,.42);
+      border-radius: 16px;
+      padding: 0 12px;
+      outline: none;
+      font-size: 14px;
+      color: var(--text);
+      background: white;
+      font-weight: 800;
+      font-family: inherit;
+    }
+
+    .custom-wrap {
+      position: relative;
+    }
+
+    .delete-preset {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      width: 25px;
+      height: 25px;
+      border-radius: 9px;
+      background: rgba(217,87,87,.95);
+      color: white;
+      font-size: 14px;
+      display: grid;
+      place-items: center;
+      padding: 0;
+    }
+
+    .copy-btn.custom {
+      padding-right: 42px;
+      background: linear-gradient(135deg, #ffffff, #fff9cf);
+    }
+
+    button {
+      border: 0;
+      border-radius: 16px;
+      font-weight: 900;
+      cursor: pointer;
+      transition: transform .18s ease, box-shadow .18s ease, filter .18s ease, background .18s ease;
+      font-family: inherit;
+    }
+
+    button:hover {
+      transform: translateY(-2px) scale(1.015);
+      box-shadow: 0 12px 24px rgba(65,105,14,.18);
+      filter: saturate(1.05);
+    }
+
+    button:active { transform: translateY(1px) scale(.99); }
+
+    .copy-btn {
+      text-align: left;
+      min-height: 56px;
+      padding: 12px 14px;
+      color: var(--text);
+      background: linear-gradient(135deg, #fff, #f4ffd5);
+      border: 1px solid rgba(145,199,39,.32);
+    }
+
+    .copy-btn span {
+      display: block;
+      color: var(--green-dark);
+      font-size: 12px;
+      margin-bottom: 3px;
+      text-transform: uppercase;
+      letter-spacing: .5px;
+    }
+
+    .search-wrap {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    input {
+      width: 100%;
+      border: 1px solid rgba(145,199,39,.42);
+      border-radius: 18px;
+      padding: 14px 15px;
+      outline: none;
+      font-size: 15px;
+      color: var(--text);
+      background: white;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.8);
+    }
+
+    input:focus {
+      border-color: var(--green);
+      box-shadow: 0 0 0 4px rgba(145,199,39,.16);
+    }
+
+    .category-tabs {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 14px;
+    }
+
+    .tab {
+      padding: 9px 12px;
+      background: #efffc5;
+      color: var(--green-dark);
+      border: 1px solid rgba(145,199,39,.32);
+      font-size: 13px;
+    }
+
+    .tab.active {
+      background: linear-gradient(135deg, var(--green), var(--yellow));
+      color: white;
+    }
+
+    .menu-list {
+      max-height: 515px;
+      overflow: auto;
+      padding-right: 6px;
+      display: grid;
+      gap: 10px;
+    }
+
+    .menu-item {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+      align-items: center;
+      background: rgba(255,255,255,.92);
+      border: 1px solid rgba(145,199,39,.28);
+      border-radius: 20px;
+      padding: 13px;
+      animation: pop .22s ease both;
+    }
+
+    @keyframes pop {
+      from { opacity: 0; transform: translateY(6px) scale(.98); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    .item-name { font-weight: 950; font-size: 15px; }
+    .item-recipe { color: var(--muted); font-size: 13px; margin-top: 3px; }
+
+    .add-btn, .primary, .secondary, .danger {
+      padding: 11px 14px;
+      color: white;
+      white-space: nowrap;
+    }
+
+    .add-btn, .primary { background: linear-gradient(135deg, var(--green), var(--green-dark)); }
+    .secondary { background: linear-gradient(135deg, var(--brown), #c09943); }
+    .danger { background: linear-gradient(135deg, var(--red), #aa3939); }
+
+    .order-list {
+      display: grid;
+      gap: 9px;
+      min-height: 220px;
+      max-height: 330px;
+      overflow: auto;
+      padding-right: 4px;
+    }
+
+    .order-item {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 8px;
+      align-items: center;
+      background: linear-gradient(135deg, white, #f4ffd5);
+      border: 1px solid rgba(145,199,39,.28);
+      border-radius: 18px;
+      padding: 11px 12px;
+      font-weight: 900;
+      animation: pop .2s ease both;
+    }
+
+    .remove {
+      width: 34px;
+      height: 34px;
+      background: var(--red);
+      color: white;
+      border-radius: 12px;
+      font-size: 18px;
+    }
+
+    .actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .primary.big {
+      grid-column: 1 / -1;
+      font-size: 16px;
+      padding: 15px 16px;
+    }
+
+    .empty {
+      text-align: center;
+      color: var(--muted);
+      padding: 28px 12px;
+      border: 1px dashed rgba(145,199,39,.45);
+      border-radius: 18px;
+      background: rgba(255,255,255,.42);
+      font-weight: 800;
+    }
+
+    .making {
+      display: none;
+      margin-top: 18px;
+    }
+
+    .making.active { display: block; }
+    .ordering.hidden { display: none; }
+
+    .step-card {
+      border-radius: 28px;
+      padding: 24px;
+      background:
+        radial-gradient(circle at top right, rgba(247,226,78,.45), transparent 30%),
+        linear-gradient(135deg, #ffffff, #f3ffd4);
+      border: 1px solid rgba(145,199,39,.34);
+      box-shadow: var(--shadow);
+      min-height: 380px;
+      display: grid;
+      align-content: center;
+      text-align: center;
+    }
+
+    .step-kicker {
+      color: var(--green-dark);
+      font-weight: 950;
+      text-transform: uppercase;
+      letter-spacing: .8px;
+      font-size: 13px;
+    }
+
+    .making-title {
+      margin: 8px 0 8px;
+      font-size: clamp(28px, 5vw, 54px);
+      letter-spacing: -1.8px;
+      color: var(--green-dark);
+    }
+
+    .step-text {
+      margin: 10px auto 20px;
+      max-width: 720px;
+      font-size: clamp(22px, 3vw, 36px);
+      font-weight: 950;
+      line-height: 1.12;
+    }
+
+    .progress {
+      width: min(520px, 100%);
+      height: 12px;
+      background: rgba(145,199,39,.22);
+      border-radius: 999px;
+      overflow: hidden;
+      margin: 0 auto 18px;
+    }
+
+    .bar {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--green), var(--yellow));
+      border-radius: inherit;
+      transition: width .25s ease;
+    }
+
+    .making-actions {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: 20px;
+      transform: translateX(-50%) translateY(20px);
+      opacity: 0;
+      pointer-events: none;
+      background: rgba(65,105,14,.92);
+      color: white;
+      padding: 12px 16px;
+      border-radius: 999px;
+      font-weight: 900;
+      box-shadow: 0 16px 30px rgba(65,105,14,.24);
+      transition: .22s ease;
+      z-index: 10;
+    }
+
+    .toast.show {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+    }
+
+    @media (max-width: 860px) {
+      .grid { grid-template-columns: 1fr; }
+      .messages { grid-template-columns: 1fr; }
+      .preset-builder { grid-template-columns: 1fr; }
+      .hero { align-items: flex-start; flex-direction: column; }
+      .status-pill { white-space: normal; }
+    }
+  </style>
+</head>
+<body>
+  <div class="leaf one"></div>
+  <div class="leaf two"></div>
+  <div class="leaf three"></div>
+
+  <main class="app">
+    <section class="hero">
+      <div class="brand">
+        <div class="logo-badge">☕</div>
+        <div>
+          <h1>Vantá Cafe</h1>
+          <p class="sub">Worker order assistant</p>
+        </div>
+      </div>
+      <div class="status-pill" id="statusPill">Ready for a new order</div>
+    </section>
+
+    <section id="ordering" class="ordering grid">
+      <div class="card">
+        <div class="card-head">
+          <div>
+            <h2 class="card-title">Messages & Menu</h2>
+            <div class="tiny">Copy greetings, search recipes, and build the order.</div>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="messages" id="messages"></div>
+          <div class="preset-builder">
+            <select id="presetType">
+              <option value="Greeting">Greeting</option>
+              <option value="Order">Order</option>
+              <option value="Making">Making</option>
+              <option value="Wait">Wait</option>
+              <option value="Finished">Finished</option>
+              <option value="Custom">Custom</option>
+            </select>
+            <input id="presetText" placeholder="Add your own greeting or preset message..." autocomplete="off" />
+            <button class="primary" id="addPreset">Add Preset</button>
+          </div>
+          <div class="search-wrap">
+            <input id="search" placeholder="Search drinks, e.g. iced, vanilla, slushie, cola..." autocomplete="off" />
+          </div>
+          <div class="category-tabs" id="tabs"></div>
+          <div class="menu-list" id="menuList"></div>
+        </div>
+      </div>
+
+      <aside class="card">
+        <div class="card-head">
+          <div>
+            <h2 class="card-title">Current Order</h2>
+            <div class="tiny" id="countText">0 items added</div>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="order-list" id="orderList"></div>
+          <div class="actions">
+            <button class="secondary" id="copyOrder">Copy Order</button>
+            <button class="danger" id="clearOrder">Clear</button>
+            <button class="primary big" id="beginMaking">Begin Making</button>
+          </div>
+        </div>
+      </aside>
+    </section>
+
+    <section id="making" class="making">
+      <div class="step-card">
+        <div class="step-kicker" id="stepKicker">Making item</div>
+        <h2 class="making-title" id="makingTitle">Drink Name</h2>
+        <div class="progress"><div class="bar" id="bar"></div></div>
+        <div class="step-text" id="stepText">Step text</div>
+        <div class="making-actions">
+          <button class="secondary" id="backToOrder">Back to Order</button>
+          <button class="primary" id="nextStep">Next Step</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div class="toast" id="toast">Copied!</div>
+
+  <script>
+    const recipes = {
+      "Regular": ["Use the Regular Machine."],
+      "Decaf": ["Use the Decaf Machine."],
+      "Espresso": ["Use the Espresso Machine."],
+      "Vanilla Latte": ["Use Espresso.", "Add Vanilla Flavor.", "Add Milk.", "Add Cream."],
+      "Chocolate Latte": ["Use Regular Coffee.", "Add Mocha Flavor.", "Add Milk.", "Add Cream."],
+      "Caramel Latte": ["Use Regular Coffee.", "Add Caramel Flavor.", "Add Milk.", "Add Cream."],
+      "Cappuccino": ["Use Regular Coffee.", "Add Decaf Coffee."],
+      "Americano": ["Use Espresso.", "Add Decaf Coffee."],
+      "Iced Regular": ["Add Ice.", "Use the Regular Machine."],
+      "Iced Decaf": ["Add Ice.", "Use the Decaf Machine."],
+      "Iced Espresso": ["Add Ice.", "Use the Espresso Machine."],
+      "Iced Vanilla Latte": ["Add Ice.", "Use Espresso.", "Add Vanilla Flavor.", "Add Milk.", "Add Cream."],
+      "Iced Chocolate Latte": ["Add Ice.", "Use Espresso.", "Add Chocolate Flavor.", "Add Milk.", "Add Cream."],
+      "Iced Caramel Latte": ["Add Ice.", "Use Regular Coffee.", "Add Caramel Flavor.", "Add Milk.", "Add Cream."],
+      "Iced Cappuccino": ["Add Ice.", "Use Regular Coffee.", "Add Decaf Coffee."],
+      "Iced Americano": ["Add Ice.", "Use Espresso.", "Add Decaf Coffee."],
+
+      "Pineapple Slushie": ["Add Ice.", "Add Pineapple Juice.", "Use the Blender."],
+      "Crushed Berry Slushie": ["Add Ice.", "Add Crushed Berries Juice.", "Use the Blender."],
+      "Lime Slushie": ["Add Ice.", "Add Lime Juice.", "Use the Blender."],
+      "Mango Slushie": ["Add Ice.", "Add Mango Juice.", "Use the Blender."],
+      "Strawberry Slushie": ["Add Ice.", "Add Strawberry Juice.", "Use the Blender."],
+      "Raspberry Slushie": ["Add Ice.", "Add Raspberry Juice.", "Use the Blender."],
+
+      "Chocolate Milkshake": ["Add Milk.", "Add Chocolate Flavor.", "Use the Milk Mixer."],
+      "Strawberry Milkshake": ["Add Milk.", "Add Strawberry Flavor.", "Use the Milk Mixer."],
+      "Banana Milkshake": ["Add Milk.", "Add Banana Flavor.", "Use the Milk Mixer."],
+      "Oreo Milkshake": ["Add Milk.", "Add Oreo Flavor.", "Use the Milk Mixer."],
+      "Mint Milkshake": ["Add Milk.", "Add Mint Flavor.", "Use the Milk Mixer."],
+      "Vanilla Milkshake": ["Add Milk.", "Add Vanilla Flavor.", "Use the Milk Mixer."],
+      "Coffee Milkshake": ["Add Milk.", "Add Coffee Flavor.", "Use the Blender."],
+      "Blueberry Milkshake": ["Add Milk.", "Add Blueberry Flavor.", "Use the Milk Mixer."],
+
+      "Tea": ["Add Hot Water.", "Add Tea.", "Add Milk."],
+      "Black Tea": ["Add Hot Water.", "Add Tea."],
+      "Green Tea": ["Add Hot Water.", "Add Green Tea."],
+
+      "Cola": ["Use the Cola Machine."],
+      "Diet Cola": ["Use the Diet Cola Machine."],
+      "Sprite": ["Use the Sprite Machine."],
+      "Fanta Original": ["Use the Fanta Original Machine."],
+      "Fanta Berry": ["Use the Fanta Berry Machine."],
+      "Fanta Fruit Twist": ["Use the Fanta Fruit Twist Machine."],
+      "Iced Cola": ["Add Ice.", "Use the Cola Machine."],
+      "Iced Diet Cola": ["Add Ice.", "Use the Diet Cola Machine."],
+      "Iced Sprite": ["Add Ice.", "Use the Sprite Machine."],
+      "Iced Fanta Original": ["Add Ice.", "Use the Fanta Original Machine."],
+      "Iced Fanta Berry": ["Add Ice.", "Use the Fanta Berry Machine."],
+      "Iced Fanta Fruit Twist": ["Add Ice.", "Use the Fanta Fruit Twist Machine."],
+
+      "Water": ["Use the Water Machine."],
+      "Iced Water": ["Add Ice.", "Use the Water Machine."],
+      "Hot Chocolate": ["Add Hot Water.", "Add Chocolate Flavor.", "Add Milk.", "Use the Milk Mixer."]
+    };
+
+    const categories = {
+      "All": Object.keys(recipes),
+      "Coffees": ["Regular", "Decaf", "Espresso", "Vanilla Latte", "Chocolate Latte", "Caramel Latte", "Cappuccino", "Americano", "Iced Regular", "Iced Decaf", "Iced Espresso", "Iced Vanilla Latte", "Iced Chocolate Latte", "Iced Caramel Latte", "Iced Cappuccino", "Iced Americano"],
+      "Slushies": ["Pineapple Slushie", "Crushed Berry Slushie", "Lime Slushie", "Mango Slushie", "Strawberry Slushie", "Raspberry Slushie"],
+      "Milkshakes": ["Chocolate Milkshake", "Strawberry Milkshake", "Banana Milkshake", "Oreo Milkshake", "Mint Milkshake", "Vanilla Milkshake", "Coffee Milkshake", "Blueberry Milkshake"],
+      "Teas": ["Tea", "Black Tea", "Green Tea"],
+      "Sodas": ["Cola", "Diet Cola", "Sprite", "Fanta Original", "Fanta Berry", "Fanta Fruit Twist", "Iced Cola", "Iced Diet Cola", "Iced Sprite", "Iced Fanta Original", "Iced Fanta Berry", "Iced Fanta Fruit Twist"],
+      "Others": ["Water", "Iced Water", "Hot Chocolate"]
+    };
+
+    const defaultMessages = [
+      { label: "Greeting", text: "Hello, welcome to Vantá Cafe! What can I get started for you?" },
+      { label: "Greeting", text: "Welcome to Vantá Cafe! Take your time and let me know what you’d like." },
+      { label: "Order", text: "Your order has been added, thank you!" },
+      { label: "Making", text: "I’ll begin preparing that for you now." },
+      { label: "Wait", text: "Thank you for waiting! Your order will be ready shortly." },
+      { label: "Finished", text: "Here you go! Enjoy your order, and thank you for visiting Vantá Cafe!" }
+    ];
+
+    let customPresets = JSON.parse(localStorage.getItem("vantaCustomPresets") || "[]");
+
+    function saveCustomPresets() {
+      localStorage.setItem("vantaCustomPresets", JSON.stringify(customPresets));
+    }
+
+    const el = id => document.getElementById(id);
+    const order = [];
+    let activeCategory = "All";
+    let makingItem = 0;
+    let makingStep = 0;
+
+    function toast(text = "Copied!") {
+      el("toast").textContent = text;
+      el("toast").classList.add("show");
+      setTimeout(() => el("toast").classList.remove("show"), 1300);
+    }
+
+    async function copy(text) {
+      try {
+        await navigator.clipboard.writeText(text);
+        toast("Copied to clipboard");
+      } catch {
+        const temp = document.createElement("textarea");
+        temp.value = text;
+        document.body.appendChild(temp);
+        temp.select();
+        document.execCommand("copy");
+        temp.remove();
+        toast("Copied to clipboard");
+      }
+    }
+
+    function renderMessages() {
+      el("messages").innerHTML = "";
+      const allMessages = [
+        ...defaultMessages.map(m => ({ ...m, custom: false })),
+        ...customPresets.map((m, index) => ({ ...m, index, custom: true }))
+      ];
+
+      allMessages.forEach(m => {
+        const wrap = document.createElement("div");
+        wrap.className = m.custom ? "custom-wrap" : "";
+
+        const btn = document.createElement("button");
+        btn.className = `copy-btn ${m.custom ? "custom" : ""}`;
+        btn.innerHTML = `<span>${m.label}${m.custom ? " · Custom" : ""}</span>${m.text}`;
+        btn.onclick = () => copy(m.text);
+        wrap.appendChild(btn);
+
+        if (m.custom) {
+          const del = document.createElement("button");
+          del.className = "delete-preset";
+          del.textContent = "×";
+          del.title = "Delete preset";
+          del.onclick = (event) => {
+            event.stopPropagation();
+            customPresets.splice(m.index, 1);
+            saveCustomPresets();
+            renderMessages();
+            toast("Preset deleted");
+          };
+          wrap.appendChild(del);
+        }
+
+        el("messages").appendChild(wrap);
+      });
+    }
+
+    function renderTabs() {
+      el("tabs").innerHTML = "";
+      Object.keys(categories).forEach(cat => {
+        const btn = document.createElement("button");
+        btn.className = `tab ${cat === activeCategory ? "active" : ""}`;
+        btn.textContent = cat;
+        btn.onclick = () => {
+          activeCategory = cat;
+          renderTabs();
+          renderMenu();
+        };
+        el("tabs").appendChild(btn);
+      });
+    }
+
+    function categoryFor(item) {
+      return Object.entries(categories).find(([cat, items]) => cat !== "All" && items.includes(item))?.[0] || "Menu";
+    }
+
+    function renderMenu() {
+      const query = el("search").value.trim().toLowerCase();
+      const source = categories[activeCategory];
+      const items = source.filter(item => {
+        const haystack = `${item} ${categoryFor(item)} ${recipes[item].join(" ")}`.toLowerCase();
+        return haystack.includes(query);
+      });
+
+      el("menuList").innerHTML = "";
+      if (!items.length) {
+        el("menuList").innerHTML = `<div class="empty">No matching drinks found.</div>`;
+        return;
+      }
+
+      items.forEach(item => {
+        const row = document.createElement("div");
+        row.className = "menu-item";
+        row.innerHTML = `
+          <div>
+            <div class="item-name">${item}</div>
+            <div class="item-recipe">${recipes[item].join(" + ").replaceAll(".", "")}</div>
+          </div>
+          <button class="add-btn">Add</button>
+        `;
+        row.querySelector("button").onclick = () => {
+          order.push(item);
+          renderOrder();
+          toast(`${item} added`);
+        };
+        el("menuList").appendChild(row);
+      });
+    }
+
+    function renderOrder() {
+      el("countText").textContent = `${order.length} item${order.length === 1 ? "" : "s"} added`;
+      el("statusPill").textContent = order.length ? `${order.length} item${order.length === 1 ? "" : "s"} in order` : "Ready for a new order";
+      el("orderList").innerHTML = "";
+
+      if (!order.length) {
+        el("orderList").innerHTML = `<div class="empty">No items added yet.</div>`;
+        return;
+      }
+
+      order.forEach((item, index) => {
+        const row = document.createElement("div");
+        row.className = "order-item";
+        row.innerHTML = `<span>${index + 1}. ${item}</span><button class="remove">×</button>`;
+        row.querySelector("button").onclick = () => {
+          order.splice(index, 1);
+          renderOrder();
+        };
+        el("orderList").appendChild(row);
+      });
+    }
+
+    function beginMaking() {
+      if (!order.length) {
+        toast("Add at least one item first");
+        return;
+      }
+      makingItem = 0;
+      makingStep = 0;
+      el("ordering").classList.add("hidden");
+      el("making").classList.add("active");
+      renderStep();
+    }
+
+    function renderStep() {
+      const item = order[makingItem];
+      const steps = recipes[item];
+      const step = steps[makingStep];
+      const pct = ((makingStep + 1) / steps.length) * 100;
+
+      el("stepKicker").textContent = `Item ${makingItem + 1} of ${order.length} · Step ${makingStep + 1} of ${steps.length}`;
+      el("makingTitle").textContent = item;
+      el("stepText").textContent = step;
+      el("bar").style.width = `${pct}%`;
+      el("nextStep").textContent = makingStep === steps.length - 1
+        ? (makingItem === order.length - 1 ? "Finish Order" : "Next Item")
+        : "Next Step";
+      el("statusPill").textContent = `Making ${item}`;
+    }
+
+    function nextStep() {
+      const item = order[makingItem];
+      const steps = recipes[item];
+
+      if (makingStep < steps.length - 1) {
+        makingStep++;
+        renderStep();
+        return;
+      }
+
+      if (makingItem < order.length - 1) {
+        makingItem++;
+        makingStep = 0;
+        renderStep();
+        return;
+      }
+
+      order.length = 0;
+      renderOrder();
+      backToOrder();
+      toast("Order finished");
+    }
+
+    function backToOrder() {
+      el("making").classList.remove("active");
+      el("ordering").classList.remove("hidden");
+      el("statusPill").textContent = order.length ? `${order.length} item${order.length === 1 ? "" : "s"} in order` : "Ready for a new order";
+    }
+
+    el("addPreset").onclick = () => {
+      const text = el("presetText").value.trim();
+      const label = el("presetType").value;
+
+      if (!text) {
+        toast("Type a preset first");
+        return;
+      }
+
+      customPresets.push({ label, text });
+      saveCustomPresets();
+      el("presetText").value = "";
+      renderMessages();
+      toast("Preset added");
+    };
+
+    el("presetText").addEventListener("keydown", event => {
+      if (event.key === "Enter") el("addPreset").click();
+    });
+
+    el("search").addEventListener("input", renderMenu);
+    el("beginMaking").onclick = beginMaking;
+    el("nextStep").onclick = nextStep;
+    el("backToOrder").onclick = backToOrder;
+    el("clearOrder").onclick = () => { order.length = 0; renderOrder(); toast("Order cleared"); };
+    el("copyOrder").onclick = () => {
+      if (!order.length) return toast("No order to copy");
+      copy(order.map((item, i) => `${i + 1}. ${item}`).join("\n"));
+    };
+
+    renderMessages();
+    renderTabs();
+    renderMenu();
+    renderOrder();
+  </script>
+</body>
+</html>
